@@ -36,7 +36,7 @@
  * maintenance of any nuclear facility.
  */
 
-import com.sun.tools.doclets.Taglet;
+import java.jdk.Taglet;
 import com.sun.javadoc.*;
 import java.util.Map;
 import java.io.*;
