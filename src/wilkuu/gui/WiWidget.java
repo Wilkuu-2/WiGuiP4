@@ -5,7 +5,6 @@ package wilkuu.gui;
 
 import processing.core.*;
 import java.util.ArrayList;
-
 /**
  * @author wilkuu 
  *
@@ -13,16 +12,18 @@ import java.util.ArrayList;
 
 
 public abstract class WiWidget {
-	private PVector pos;  //Fractional position on the parent
-	private PVector size; //Fractional size on the parent widget;
-	private PApplet applet;
+	protected PVector pos;  //Fractional position on the parent
+	protected PVector size; //Fractional size on the parent widget;
+	protected PApplet applet;
 	
-	private WiWidget parent; 
+	protected WiWidget parent; 
 	private WiGui root; 
 	
-	private boolean suicidal = false; 
+	private float[] margins = {0,0,0,0};
 	
-	private ArrayList<WiWidget> children;
+	protected boolean suicidal = false; 
+	
+	protected ArrayList<WiWidget> children;
 	
 	/**
 	 * Full constructor 
@@ -92,6 +93,10 @@ public abstract class WiWidget {
 	public WiWidget getParent() {
 		return parent; 
 	}
+	
+	public PVector getSize() {
+		return size.copy(); 
+	}
 	/**
 	 * Returns the root of the widget
 	 * @return WiGui
@@ -99,8 +104,13 @@ public abstract class WiWidget {
 	public WiGui getRoot() {
 		return root; 
 	}
+	
+	public PApplet getApplet() {
+		return applet;
+	}
+	
 	/**
-	 * Gets the size in pixels
+	 * Gets their internal/drawable size in pixels
 	 * @return PVector
 	 */
 	public PVector getPixelSize() {
@@ -109,10 +119,11 @@ public abstract class WiWidget {
 			// Recursively get the size of the parent 
 			pSize = parent.getPixelSize();
 		else
-			pSize = root.rootSize;
+			pSize = root.getSize();
 		
 		// Create a PVector from the vertical and horizontal sizes
-		return new PVector(pSize.x * size.x, pSize.y * size.y);
+		return new PVector(pSize.x * (size.x - margins[1] - margins[3]), 
+						   pSize.y * (size.y - margins[0]  - margins[2]));
 		// TODO Add margins
 		
 	}
@@ -123,14 +134,10 @@ public abstract class WiWidget {
 	 */
 	public PVector getPixelPos() {
 		PVector pSize;
-		if(parent != null) 
-			// Recursively get the size of the parent 
-			pSize = parent.getPixelSize();
-		else
-			pSize = root.rootSize;
-		
+		pSize = parent.getPixelSize();
 		// Create a PVector from the fractional vertical and horizontal positions and the parent size
-		return new PVector(pSize.x * pos.x, pSize.y * pos.y);
+		return new PVector(pSize.x * (pos.x + margins[3]), 
+						   pSize.y * (pos.y + margins[0]));
 		// TODO Add margins
 		// TODO Maybe involve layering using the Z in position
 	}
@@ -140,11 +147,43 @@ public abstract class WiWidget {
 	}
 	
 	// -- SETTERS 
+	
+	// Margins 
+	/**
+	 * Sets one of the margins
+	 * @param side the side that needs to be set
+	 * @param size the margin size in pixels 
+	 */
+	public void setMargin(ESide side, float size) {
+		margins[side.index] = size; 
+	}
+	/**
+	 * Sets all margins with a float array 
+	 * @param marginsArray a array of margins {TOP,RIGHT,BOTTOM,LEFT}
+	 */
+	public void setMargins(float[] marginsArray) {
+		margins = marginsArray.clone();
+	}
+	/**
+	 * Sets all margins 
+	 * @param top top margin 
+	 * @param right right margin 
+	 * @param bottom bottom margin 
+	 * @param left left margin 
+	 */
+	public void setMargins(float top, float right, float bottom, float left) {
+		margins = new float[]{top,right,bottom,left};
+	}
+	
+	public void setUniformMargins(float margin) {
+		margins = new float[]{margin,margin,margin,margin};
+	}
+	
 	/**
 	 * Sets the parent 
 	 * @param newParent the new parent 
 	 */
-	void setParent(WiWidget newParent) {
+	public void setParent(WiWidget newParent) {
 		parent = newParent;
 		setRoot(newParent.root);
 	}
@@ -153,9 +192,9 @@ public abstract class WiWidget {
 	 * Sets the root 
 	 * @param newRoot the new root 
 	 */
-	void setRoot(WiGui newRoot) {
+	public void setRoot(WiGui newRoot) {
 		root = newRoot;
-		applet = root.parent;
+		applet = root.getApplet();
 	}
 	// -- CHILDREN HANDLING
 	/**

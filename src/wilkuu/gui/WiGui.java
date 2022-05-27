@@ -1,6 +1,5 @@
 package wilkuu.gui;
 
-import java.util.ArrayList;
 import processing.core.*;
 import processing.event.KeyEvent;
 import processing.event.MouseEvent;
@@ -14,22 +13,13 @@ import processing.event.MouseEvent;
  * automatically include the example in the javadoc.) 
  */
 
-public class WiGui {
-	// myParent is a reference to the parent sketch
-	PApplet parent;
-	// rootPos is the position of the GUI 
-	PVector rootPos; 
-	// rootSize is the size of the GUI 
-	PVector rootSize;
-	// instanceCount is a static counter of all instances active 
-	private static int instanceCount = 0;
-	// The children widgets of this widget
-	private static ArrayList<WiWidget> children;
-	private boolean willResize = true; 
+public class WiGui extends WiWidget  {
 	
+	private static int instanceCount = 0; // static counter of all instances active 
+	private boolean willResize = true;    // flag to rule over resizing of the widget Applet 
+	private PVector appletSize;           // size of the applet before resize
 	
-	private float appletSizeX; 
-	private float appletSizeY; 
+	public static boolean LOG = true; 
 	
 	/**
 	 * The version of the Library
@@ -38,23 +28,35 @@ public class WiGui {
 	
 
 	/**
-	 * a Constructor, usually called in the setup() method in your sketch to
-	 * initialize and start the Library.
+	 * A constructor for the GUI using just floats  
+	 * 
+	 * @param theParent The applet
+	 * @param pX x coordinate of the 0,0 point 
+	 * @param pY y coordinate of the 0,0 point 
+	 * @param sX width 
+	 * @param sY height
+	 */
+	public WiGui(PApplet theParent, float pX, float pY, float sX ,float sY) {
+		this(theParent, new PVector(pX,pY),new PVector(sX,sY));
+	}
+	
+	
+	/**
+	 * A constructor for the GUI using PVectors
+	 * 
 	 * 
 	 * @param theParent the parent PApplet
-	 * @param rootPosition the position of the GUI
+	 * @param rootPosition the position of the GUIfloat sXfloat sX
 	 * @param rootSize the size of the GUI
 	 */
 	public WiGui(PApplet theParent, PVector rootPosition, PVector rootSize) {
-	    parent = theParent;
-	    rootPos = rootPosition;
-	    this.rootSize = rootSize;
-	    children = new ArrayList<WiWidget>();
+		super(rootPosition, rootSize);
+	    setApplet(theParent);
+	    setRoot(this);
 	    instanceCount++;
 	    System.out.println("[WiGui]: Version: " + VERSION + "\n Initializing instance #" + instanceCount );
 	    
-	    appletSizeX = parent.width;
-	    appletSizeY = parent.height; 
+	    appletSize  = new PVector(applet.width,applet.height);
 	    
 	}
 	// -- CONTROL 
@@ -63,7 +65,7 @@ public class WiGui {
 	 * 
 	 */
 	public void start() {
-		   parent.registerMethod("draw",this);
+		   applet.registerMethod("draw",this);
 		   //parent.registerMethod("keyEvent",this);
 		   //parent.registerMethod("mouseEvent", this);
 		}
@@ -79,40 +81,37 @@ public class WiGui {
 		return VERSION;
 	}
 	
+	@Override
+	public PVector getPixelSize() {
+		return size.copy();
+	}
+	public PVector getPixelPos() {
+		return pos.copy();
+	}
+	
+	
+	
 	// -- SETTERS
+	
+	public void setApplet(PApplet newApplet) {
+		applet = newApplet;
+	}
+	
 	/**
 	 *  Resizes using the saved applet size and the new applet size 
 	 */
 	public void appletResize() {
-		rootSize.x = rootSize.x / appletSizeX * parent.width;
-		rootSize.y = rootSize.y / appletSizeY * parent.height;
+		WiLog("Resized applet caused a resize of the GUI\n");
+		WiLog("Saved size: " + appletSize + '\n' );
+		WiLog("New size: [" + applet.width + ", " + applet.height + "]\n");
 		
-		rootPos.x = rootPos.x / appletSizeX * parent.width;
-		rootPos.y = rootPos.y / appletSizeY * parent.height;
+		size.x = size.x / appletSize.x * applet.width;
+		size.y = size.y / appletSize.y * applet.height;
 		
-	    appletSizeX = parent.width;
-	    appletSizeY = parent.height; 
-	}
-	
-	
-	
-	
-	// -- CHILDREN HANDLING
-	/**
-	 * Add a child directly to the GUI
-	 * @param child The child to be added 
-	 */
-	public void addChild(WiWidget child) {
-		children.add(child);
-		child.setRoot(this);
-	}
-	/**
-	 * Add a child directly to the GUI
-	 * @param child The child to be added 
-	 */
-	public void removeChild(WiWidget child) {
-		children.remove(child);
-		child.setRoot(null);
+		pos.x = pos.x / appletSize.x * applet.width;
+		pos.y = pos.y / appletSize.y * applet.height;
+		
+	    appletSize = new PVector(applet.width, applet.height); 
 	}
 	
 	// -- EVENTS / HANDLES 
@@ -132,52 +131,44 @@ public class WiGui {
 		// TODO Events not implemented
 	}
 	
+	protected void display() {
+		
+	}
+	protected void update() {
+		if(willResize && (appletSize.x != applet.width || appletSize.y != applet.height))
+			appletResize();
+	}
+	
 	/**
 	 * A handle of the standard processing draw loop
 	 * 
-	 */	
+	 */
 	public void draw() {
-		parent.pushMatrix();
-		parent.translate(rootPos.x, rootPos.y);
-		h_update();
+		Thread updateThread = new Thread(() -> 
+			this.h_update() // Run the update concurrent to the drawing, i wonder if this will have any grave consequences 
+		); // TODO: This will **definitely** *not* cause any race conditions   		
+		updateThread.start();
 		
-		for(WiWidget child : children) {
-			child.h_display();
-		}
-		parent.popMatrix();
+		h_display(); 
+		
+		try{
+			updateThread.join();
+		} catch(InterruptedException e) {
+			e.printStackTrace();
+		}	
 	}
 	
-	/**
-	 * A sub-handle of the standard processing draw loop that handles updating
-	 * TODO Make this run concurrent to drawing 
-	 *
-	 */
-	public void h_update() {
-		if(willResize && (appletSizeX != parent.width || appletSizeY != parent.height))
-			appletResize();
-		
-		
-		for(WiWidget child : children) {
-			child.h_update();
-		}
-		
-		children.removeIf(w -> w.isSuicidal()); // Remove any widget that wish to be destroyed
-		
-	}
-	
-	/**
-	 * Closes all widget if case they hold a resource, like a file. 
-	 * 
-	 */
-	public void close() {
-		for(WiWidget child : children) {
-			child.close();
-		}
-	
+	public void closeCustom() { 
 		assert (instanceCount > 0);
 	    instanceCount--;
 	}
 	
 	
+	// -- UTiLS
+	
+	public static void WiLog(String out) {
+		if(LOG) {
+			System.out.printf("{%s} [WiGui]: %s", java.time.LocalTime.now() , out);
+		}
 }
 
