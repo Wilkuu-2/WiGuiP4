@@ -17,6 +17,7 @@ public abstract class WiWidget {
 	protected PApplet applet;
 	
 	protected WiWidget parent; 
+	
 	private WiGui root; 
 	
 	private float[] margins = {0,0,0,0};
@@ -24,7 +25,7 @@ public abstract class WiWidget {
 	protected boolean suicidal = false; 
 	
 	protected ArrayList<WiWidget> children;
-	
+	public static boolean LOG = true; 
 	/**
 	 * Full constructor 
 	 * 
@@ -263,6 +264,16 @@ public abstract class WiWidget {
 		suicidal = true; 
     }
     
+    // -- UTIL
+    
+	public static void WiLog(String out) {
+		if(LOG) {
+			System.out.printf("{%s} [WiGui]: %s", java.time.LocalTime.now() , out);
+		}
+	}
+    
+    // -- HANDLES 
+    
 	/**
 	 *  Custom method for object cleanup, if necessary
 	 *  
@@ -278,9 +289,5 @@ public abstract class WiWidget {
 	 */
     protected abstract void update();
 
-	
-	
-	
-	
 	
 }

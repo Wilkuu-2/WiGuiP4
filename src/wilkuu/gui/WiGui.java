@@ -19,8 +19,6 @@ public class WiGui extends WiWidget  {
 	private boolean willResize = true;    // flag to rule over resizing of the widget Applet 
 	private PVector appletSize;           // size of the applet before resize
 	
-	public static boolean LOG = true; 
-	
 	/**
 	 * The version of the Library
 	 */
@@ -165,10 +163,5 @@ public class WiGui extends WiWidget  {
 	
 	
 	// -- UTiLS
-	
-	public static void WiLog(String out) {
-		if(LOG) {
-			System.out.printf("{%s} [WiGui]: %s", java.time.LocalTime.now() , out);
-		}
 }
 
