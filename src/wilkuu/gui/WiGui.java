@@ -14,10 +14,12 @@ import processing.event.MouseEvent;
  */
 
 public class WiGui extends WiWidget  {
-	
+	private static final String[] methodsToRegister = {"draw","mouseEvent","keyEvent"};
 	private static int instanceCount = 0; // static counter of all instances active 
 	private boolean willResize = true;    // flag to rule over resizing of the widget Applet 
 	private PVector appletSize;           // size of the applet before resize
+	private boolean isStarted = false; 
+	private PApplet applet; 
 	
 	/**
 	 * The version of the Library
@@ -63,10 +65,16 @@ public class WiGui extends WiWidget  {
 	 * 
 	 */
 	public void start() {
-		   applet.registerMethod("draw",this);
-		   //parent.registerMethod("keyEvent",this);
-		   //parent.registerMethod("mouseEvent", this);
-		}
+		for(String s : methodsToRegister)
+			applet.registerMethod(s, this);
+		isStarted = true; 
+	}
+	
+	public void stop() {
+		for(String s : methodsToRegister)
+			applet.unregisterMethod(s, this);
+		isStarted = false; 
+	}
 	
 	// -- GETTERS 
 	 
@@ -80,37 +88,54 @@ public class WiGui extends WiWidget  {
 	}
 	
 	@Override
+	/**
+	 * Returns the absolute size of the GUI
+	 * @return the size of the GUI in pixels
+	 */
 	public PVector getPixelSize() {
 		return size.copy();
 	}
+	
+	@Override
+	/**
+	 * Returns the absolute position of the GUI 
+	 * @return absolute position of the GUI in pixels
+	 */
 	public PVector getPixelPos() {
 		return pos.copy();
+	}
+	
+	public PApplet getApplet() {
+		return applet;
 	}
 	
 	
 	
 	// -- SETTERS
-	
+	/**
+	 * Sets the PApplet of the GUI
+	 * @param newApplet
+	 */
 	public void setApplet(PApplet newApplet) {
-		applet = newApplet;
+		boolean cpIsStarted = isStarted; 
+		
+		if(cpIsStarted)
+			stop();
+		
+		applet = newApplet; 
+		appletSize  = new PVector(applet.width,applet.height);
+		
+		appletResize();
+		
+		if(cpIsStarted)
+			start();
+		
+		WiLogln("Applet changed");
 	}
 	
 	/**
 	 *  Resizes using the saved applet size and the new applet size 
 	 */
-	public void appletResize() {
-		WiLog("Resized applet caused a resize of the GUI\n");
-		WiLog("Saved size: " + appletSize + '\n' );
-		WiLog("New size: [" + applet.width + ", " + applet.height + "]\n");
-		
-		size.x = size.x / appletSize.x * applet.width;
-		size.y = size.y / appletSize.y * applet.height;
-		
-		pos.x = pos.x / appletSize.x * applet.width;
-		pos.y = pos.y / appletSize.y * applet.height;
-		
-	    appletSize = new PVector(applet.width, applet.height); 
-	}
 	
 	// -- EVENTS / HANDLES 
 	/**
@@ -126,15 +151,33 @@ public class WiGui extends WiWidget  {
 	 * @param ev The event of using the mouse 
 	 */
 	public void mouseEvent(MouseEvent ev) {
-		// TODO Events not implemented
+		//WiLog("Mouse Event\n");
 	}
 	
-	protected void display() {
-		
-	}
+	protected void display() { /* Stub */ }
+	protected void resize()  { /* Stub */ }
+	
 	protected void update() {
 		if(willResize && (appletSize.x != applet.width || appletSize.y != applet.height))
 			appletResize();
+	}
+	
+	public void appletResize() {
+		WiLog("Resized applet caused a resize of the GUI\n");
+		WiLog("Saved size: " + appletSize + '\n' );
+		WiLog("New size: [" + applet.width + ", " + applet.height + "]\n");
+		WiLog("APPLET: " + applet);
+		
+		size.x = size.x / appletSize.x * applet.width;
+		size.y = size.y / appletSize.y * applet.height;
+		
+		pos.x = pos.x / appletSize.x * applet.width;
+		pos.y = pos.y / appletSize.y * applet.height;
+		
+	    appletSize = new PVector(applet.width, applet.height); 
+	    
+	    h_resize();
+	    
 	}
 	
 	/**
@@ -142,18 +185,19 @@ public class WiGui extends WiWidget  {
 	 * 
 	 */
 	public void draw() {
-		Thread updateThread = new Thread(() -> 
-			this.h_update() // Run the update concurrent to the drawing, i wonder if this will have any grave consequences 
-		); // TODO: This will **definitely** *not* cause any race conditions   		
-		updateThread.start();
+//		Thread updateThread = new Thread(() -> 
+//			this.h_update() // Run the update concurrent to the drawing, i wonder if this will have any grave consequences 
+//		); // TODO: This will **definitely** *not* cause any race conditions   		
+//		updateThread.start();
 		
+		h_update();
 		h_display(); 
 		
-		try{
-			updateThread.join();
-		} catch(InterruptedException e) {
-			e.printStackTrace();
-		}	
+//		try{
+//			updateThread.join();
+//		} catch(InterruptedException e) {
+//			e.printStackTrace();
+//		}	
 	}
 	
 	public void closeCustom() { 

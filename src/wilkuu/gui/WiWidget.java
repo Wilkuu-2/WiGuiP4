@@ -14,7 +14,6 @@ import java.util.ArrayList;
 public abstract class WiWidget {
 	protected PVector pos;  //Fractional position on the parent
 	protected PVector size; //Fractional size on the parent widget;
-	protected PApplet applet;
 	
 	protected WiWidget parent; 
 	
@@ -107,7 +106,7 @@ public abstract class WiWidget {
 	}
 	
 	public PApplet getApplet() {
-		return applet;
+		return root.getApplet();
 	}
 	
 	/**
@@ -195,7 +194,7 @@ public abstract class WiWidget {
 	 */
 	public void setRoot(WiGui newRoot) {
 		root = newRoot;
-		applet = root.getApplet();
+		h_resize();
 	}
 	// -- CHILDREN HANDLING
 	/**
@@ -222,6 +221,7 @@ public abstract class WiWidget {
 	 * The handle to display the widget and it's children
 	 */
     public void h_display() {
+    	PApplet applet = getApplet();
     	applet.pushMatrix();
     	
     	PVector PixPos = getPixelPos();
@@ -246,6 +246,26 @@ public abstract class WiWidget {
     	children.removeIf(w -> w.suicidal); // Remove any widget that wish to be destroyed
     }
     
+    public void h_resize() {
+    	resize();
+    	
+    	for(WiWidget child : children)     
+    		child.h_resize();
+    }
+    
+    // -- UTIL
+    
+	public static void WiLog(String out) {
+		if(LOG) {
+			System.out.printf("{%s} [WiGui]: %s", java.time.LocalTime.now() , out);
+		}
+	}
+	public static void WiLogln(String out) {
+		WiLog(out+'\n');
+	}
+    
+    // -- HANDLES 
+	
 	/**
 	 *  Handle for object cleanup, if necessary
 	 *  relays the cleanup to it's children 
@@ -264,16 +284,7 @@ public abstract class WiWidget {
 		suicidal = true; 
     }
     
-    // -- UTIL
-    
-	public static void WiLog(String out) {
-		if(LOG) {
-			System.out.printf("{%s} [WiGui]: %s", java.time.LocalTime.now() , out);
-		}
-	}
-    
-    // -- HANDLES 
-    
+	
 	/**
 	 *  Custom method for object cleanup, if necessary
 	 *  
@@ -288,6 +299,12 @@ public abstract class WiWidget {
 	 *  Custom update method
 	 */
     protected abstract void update();
+    
+    protected void resize() {
+    /**
+    *  Custom resizing method
+    */
+    }
 
 	
 }
