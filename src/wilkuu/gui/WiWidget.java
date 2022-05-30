@@ -19,7 +19,7 @@ public abstract class WiWidget {
 	
 	private WiGui root; 
 	
-	private float[] margins = {0,0,0,0};
+	protected float[] margins = {0,0,0,0};
 	
 	protected boolean suicidal = false; 
 	

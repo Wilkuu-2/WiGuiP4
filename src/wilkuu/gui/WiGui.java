@@ -51,12 +51,13 @@ public class WiGui extends WiWidget  {
 	 */
 	public WiGui(PApplet theParent, PVector rootPosition, PVector rootSize) {
 		super(rootPosition, rootSize);
+		appletSize  = new PVector(theParent.width,theParent.height);
 	    setApplet(theParent);
 	    setRoot(this);
 	    instanceCount++;
 	    System.out.println("[WiGui]: Version: " + VERSION + "\n Initializing instance #" + instanceCount );
 	    
-	    appletSize  = new PVector(applet.width,applet.height);
+	    
 	    
 	}
 	// -- CONTROL 
@@ -93,7 +94,9 @@ public class WiGui extends WiWidget  {
 	 * @return the size of the GUI in pixels
 	 */
 	public PVector getPixelSize() {
-		return size.copy();
+		return new PVector(size.x - applet.width * (margins[3] + margins[1]),
+								 size.y - applet.width * (margins[0] + margins[2]));
+		
 	}
 	
 	@Override
@@ -102,7 +105,9 @@ public class WiGui extends WiWidget  {
 	 * @return absolute position of the GUI in pixels
 	 */
 	public PVector getPixelPos() {
-		return pos.copy();
+		return new PVector(pos.x + applet.width * margins[3],
+						   pos.y + applet.width * margins[0]); 
+		
 	}
 	
 	public PApplet getApplet() {
@@ -123,7 +128,6 @@ public class WiGui extends WiWidget  {
 			stop();
 		
 		applet = newApplet; 
-		appletSize  = new PVector(applet.width,applet.height);
 		
 		appletResize();
 		
@@ -185,19 +189,19 @@ public class WiGui extends WiWidget  {
 	 * 
 	 */
 	public void draw() {
-//		Thread updateThread = new Thread(() -> 
-//			this.h_update() // Run the update concurrent to the drawing, i wonder if this will have any grave consequences 
-//		); // TODO: This will **definitely** *not* cause any race conditions   		
-//		updateThread.start();
+		Thread updateThread = new Thread(() -> 
+			this.h_update() // Run the update concurrent to the drawing, i wonder if this will have any grave consequences 
+		); // TODO: This will **definitely** *not* cause any race conditions   		
+		updateThread.start();
 		
-		h_update();
+		//h_update();
 		h_display(); 
 		
-//		try{
-//			updateThread.join();
-//		} catch(InterruptedException e) {
-//			e.printStackTrace();
-//		}	
+		try{
+			updateThread.join();
+		} catch(InterruptedException e) {
+			e.printStackTrace();
+		}	
 	}
 	
 	public void closeCustom() { 
