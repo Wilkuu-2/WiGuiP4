@@ -5,6 +5,7 @@ import processing.core.*;
 public class WiWindow extends PApplet{
 	private String[] args; 
 	private PVector size;
+	private int bgColor = color(90,0,90);
 	
 	public WiWindow(PVector size, String name, String... args){
 		super();
@@ -23,7 +24,7 @@ public class WiWindow extends PApplet{
 		
 	}
 	public void draw() {
-		background(90);
+		background(bgColor);
 	}
 	
 	public void open(){

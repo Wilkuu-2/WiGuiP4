@@ -11,7 +11,7 @@ public enum ESide {
 	BOTTOM(2),
 	LEFT(3);
 	
-	final int index; 
+	final public int index; 
 	
 	ESide(int i) {
 		index = i;

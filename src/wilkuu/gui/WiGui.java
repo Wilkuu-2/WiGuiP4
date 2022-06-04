@@ -55,8 +55,8 @@ public class WiGui extends WiWidget  {
 	    setApplet(theParent);
 	    setRoot(this);
 	    instanceCount++;
-	    System.out.println("[WiGui]: Version: " + VERSION + "\n Initializing instance #" + instanceCount );
-	    
+	    PApplet.println("[WiGui]: Version: " + VERSION + "\n Initializing instance #" + instanceCount );
+	   
 	    
 	    
 	}

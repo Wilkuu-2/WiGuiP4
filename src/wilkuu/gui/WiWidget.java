@@ -11,8 +11,24 @@ import java.util.ArrayList;
  */
 
 
-public abstract class WiWidget {
-	protected PVector pos;  //Fractional position on the parent
+public abstract class WiWidget {	
+	public static int defaultBorderColor = 0xFFFFFFFF;
+	public static float defaultBorderThickness = 4; 
+	private static int defaultBackgroundColor = 0xFF444444;
+	
+	public static boolean defaultDrawBorder = true;
+	public static boolean defaultDrawBackground = true;
+	
+	private int borderColor;
+	private float borderThickness; 
+	private int backgroundColor;
+	
+	private boolean drawBorder;
+	private boolean drawBackground;
+	
+	
+	
+	protected PVector pos;  //Fractional position on the parent;
 	protected PVector size; //Fractional size on the parent widget;
 	
 	protected WiWidget parent; 
@@ -63,6 +79,12 @@ public abstract class WiWidget {
 		pos = initPos;
 		size = initSize;
 		children = new ArrayList<WiWidget>();
+		
+		backgroundColor = defaultBackgroundColor;
+		borderColor     = defaultBorderColor;
+		borderThickness = defaultBorderThickness;
+		drawBackground  = defaultDrawBackground;
+		drawBorder      = defaultDrawBorder;
 	}
 	/**
 	 * Bare constructor with the floats instead of the PVector's 
@@ -137,7 +159,7 @@ public abstract class WiWidget {
 		pSize = parent.getPixelSize();
 		// Create a PVector from the fractional vertical and horizontal positions and the parent size
 		return new PVector(pSize.x * (pos.x + margins[3]), 
-						   pSize.y * (pos.y + margins[0]));
+						   pSize.y * (pos.y + margins[0])).add(parent.getPixelPos());
 		// TODO Add margins
 		// TODO Maybe involve layering using the Z in position
 	}
@@ -147,6 +169,20 @@ public abstract class WiWidget {
 	}
 	
 	// -- SETTERS 
+	
+	// Borders
+	
+	public void setBorder(boolean drawBorder, int borderColor, float borderThickness) {
+		this.drawBorder = drawBorder;
+		this.borderColor = borderColor;
+		this.borderThickness = borderThickness;
+	}
+	
+	// Background 
+	public void setBackground(boolean drawBackground, int backgroundColor) {
+		this.backgroundColor = backgroundColor;
+		this.drawBackground = drawBackground;
+	}
 	
 	// Margins 
 	/**
@@ -186,6 +222,7 @@ public abstract class WiWidget {
 	public void setParent(WiWidget newParent) {
 		parent = newParent;
 		setRoot(newParent.root);
+		
 	}
 		
 	/**
@@ -194,6 +231,7 @@ public abstract class WiWidget {
 	 */
 	public void setRoot(WiGui newRoot) {
 		root = newRoot;
+		
 		h_resize();
 	}
 	// -- CHILDREN HANDLING
@@ -224,14 +262,39 @@ public abstract class WiWidget {
     	PApplet applet = getApplet();
     	applet.pushMatrix();
     	
-    	PVector PixPos = getPixelPos();
-    	applet.translate(PixPos.x, PixPos.y);
+    	PVector pixPos = getPixelPos();
+    	PVector pixSize = getPixelSize();
+    	applet.translate(pixPos.x, pixPos.y);
+    	
+    	applet.pushStyle();
+    	
+        if(drawBorder) {
+        	applet.strokeWeight(borderThickness);
+        	applet.stroke(borderColor);
+        } else {
+        	applet.noStroke();
+        } 
+        
+        if(drawBackground) {
+        	applet.fill(backgroundColor);
+        } else {
+        	applet.noFill();
+        }
+        
+        if(drawBackground || drawBorder) {
+        	applet.rect(0,0,pixSize.x,pixSize.y);
+        }
+    	
+    	applet.popStyle();
     	
     	display();
     	
+    	applet.popMatrix();
+    	
     	for(WiWidget child : children)
     		child.h_display();
-    	applet.popMatrix();
+    	
+    
     }
     
 	/**
@@ -284,7 +347,7 @@ public abstract class WiWidget {
 		suicidal = true; 
     }
     
-	
+
 	/**
 	 *  Custom method for object cleanup, if necessary
 	 *  
